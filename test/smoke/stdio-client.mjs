@@ -1,4 +1,4 @@
-// Smoke #4 — drive all 9 tools over real stdio transport.
+// Smoke #5 — drive all 10 tools over real stdio transport.
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { fileURLToPath } from "node:url";
@@ -82,5 +82,11 @@ const p9 = JSON.parse(r9.content[0].text);
 const childNames = p9.tree.children.map((c) => c.name).join(", ");
 console.log(`✅ get_component_tree: root=${p9.tree.name}, children=[${childNames}]`);
 
+// 10. find_hooks
+const r10 = await client2.callTool({ name: "find_hooks", arguments: { component: "ConnectedUserList" } });
+const p10 = JSON.parse(r10.content[0].text);
+const hookNames = p10.hooks.map((h) => h.hook).join(", ");
+console.log(`✅ find_hooks: ${p10.hooks.length} hooks in ${p10.component}: ${hookNames}`);
+
 await client2.close();
-console.log("\n🎉 ALL 9 TOOLS SMOKE OK");
+console.log("\n🎉 ALL 10 TOOLS SMOKE OK");

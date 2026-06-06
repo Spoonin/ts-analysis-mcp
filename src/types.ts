@@ -141,6 +141,15 @@ export interface ExportInfo {
   isReExport: boolean;
 }
 
+/** CONTEXT.md › Hook Call — one hook invocation inside a component or custom hook. */
+export interface HookCall {
+  /** Hook function name, e.g. "useState", "useSelector", "useAuth". */
+  hook: string;
+  /** Raw argument text, e.g. "state => state.users.list" or "true". */
+  args: string;
+  line: number;
+}
+
 /** CONTEXT.md › Diagnostic. */
 export interface DiagnosticInfo {
   file: string | null;

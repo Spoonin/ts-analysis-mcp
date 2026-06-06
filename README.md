@@ -8,7 +8,7 @@ Gives AI agents deep, decorator-aware and JSX-aware understanding of your TypeSc
 
 AI agents working with large TypeScript codebases need to understand **structure**: component render trees in React, dependency injection wiring in NestJS, barrel re-exports, decorator metadata. Plain `grep` and file reading miss the semantic layer. Language servers give hover/go-to-definition but can't answer "find all classes decorated with `@Controller`" or "build me the component tree starting from `<App>`."
 
-This server fills that gap with nine tools powered by the TypeScript compiler's own type checker.
+This server fills that gap with ten tools powered by the TypeScript compiler's own type checker.
 
 ## Tools
 
@@ -21,6 +21,7 @@ This server fills that gap with nine tools powered by the TypeScript compiler's 
 | `find_jsx_usage` | Find all JSX render sites of a component, with props passed and parent component name. |
 | `get_exports` | List all exports of a module, resolving barrel re-exports to their original source file. |
 | `get_component_tree` | Build a component render tree from a root, recursively resolving JSX children (with depth limit and cycle detection). |
+| `find_hooks` | Find all React hook calls (`useState`, `useSelector`, `useEffect`, custom hooks, …) inside a component or hook, with raw argument text. |
 | `get_diagnostics` | List TypeScript compiler errors/warnings (fail-open — diagnostics never block other tools). |
 | `reload_project` | Re-read tsconfig and source files after external changes. |
 
@@ -111,6 +112,7 @@ navigation instead of grep or file reading:
 - find_jsx_usage — to find all JSX render sites of a component, with props and parent component
 - get_exports — to inspect what a module exports, resolving barrel re-exports to original sources
 - get_component_tree — to build a component render tree from a root (e.g. App → UserList → UserCard → Button)
+- find_hooks — to see which hooks a component calls (useState, useSelector, useEffect, custom hooks) with arguments
 - get_diagnostics — to check for TypeScript compiler errors
 - reload_project — after making changes to source files
 

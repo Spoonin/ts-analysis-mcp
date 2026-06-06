@@ -17,6 +17,7 @@ import {
   getComponentTree,
   getComponentTreeSchema,
 } from "./tools/get-component-tree.js";
+import { findHooks, findHooksSchema } from "./tools/find-hooks.js";
 
 export function createServer(project: AmbientProject): McpServer {
   const server = new McpServer({
@@ -106,6 +107,16 @@ export function createServer(project: AmbientProject): McpServer {
       inputSchema: getComponentTreeSchema,
     },
     (args) => jsonResult(getComponentTree(args, ctx)),
+  );
+
+  server.registerTool(
+    "find_hooks",
+    {
+      description:
+        "Find all React hook calls (useState, useSelector, useEffect, custom hooks, …) inside a component or hook.",
+      inputSchema: findHooksSchema,
+    },
+    (args) => jsonResult(findHooks(args, ctx)),
   );
 
   return server;
