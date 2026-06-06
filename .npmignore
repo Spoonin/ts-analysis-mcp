@@ -1,0 +1,11 @@
+# Only dist/ ships to npm (declared in package.json "files").
+# This file is a safety net in case "files" is misconfigured.
+src/
+test/
+docs/
+.github/
+.claude/
+.gitignore
+tsconfig.json
+vitest.config.ts
+CONTEXT.md
