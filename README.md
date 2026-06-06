@@ -96,7 +96,7 @@ find_by_decorator("Controller")
 ## Development
 
 ```bash
-git clone https://github.com/AlenkaQA/ts-analysis-mcp.git
+git clone https://github.com/Spoonin/ts-analysis-mcp.git
 cd ts-analysis-mcp
 npm install
 npm run build

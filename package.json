@@ -7,11 +7,11 @@
   "author": "Denis Lozhkin <lozhkindenis@gmail.com>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/AlenkaQA/ts-analysis-mcp.git"
+    "url": "https://github.com/Spoonin/ts-analysis-mcp.git"
   },
-  "homepage": "https://github.com/AlenkaQA/ts-analysis-mcp#readme",
+  "homepage": "https://github.com/Spoonin/ts-analysis-mcp#readme",
   "bugs": {
-    "url": "https://github.com/AlenkaQA/ts-analysis-mcp/issues"
+    "url": "https://github.com/Spoonin/ts-analysis-mcp/issues"
   },
   "keywords": [
     "mcp",
