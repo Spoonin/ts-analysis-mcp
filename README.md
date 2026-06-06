@@ -93,6 +93,35 @@ find_by_decorator("Controller")
 }
 ```
 
+## Agent instructions
+
+Once the server is connected, tell your agent to prefer it over raw file reading for structural queries. Add the following snippet to your agent's instruction file:
+
+```
+When working in this TypeScript project, use the ts-analysis-mcp tools for structural
+navigation instead of grep or file reading:
+
+- find_symbol — to locate classes, interfaces, functions, enums, type aliases by name
+- get_symbol_info — to inspect a symbol's full structure (members, decorators, heritage, types)
+- find_references — to find all usages of a symbol, classified by kind (import, injection, heritage, etc.)
+- find_by_decorator — to find all symbols with a given decorator (e.g. @Controller, @Injectable)
+- get_diagnostics — to check for TypeScript compiler errors
+- reload_project — after making changes to source files
+
+Prefer these tools over reading files manually when you need to understand project structure,
+dependency injection wiring, decorator metadata, type hierarchies, or symbol usage patterns.
+```
+
+Where to put it depends on your agent:
+
+| Agent | File |
+|---|---|
+| Claude Code | `CLAUDE.md` in project root, or `.claude/rules/ts-analysis.md` |
+| Cursor | `.cursor/rules/ts-analysis.mdc` |
+| Windsurf | append to `.windsurfrules` |
+| GitHub Copilot | `.github/copilot-instructions.md` |
+| OpenAI Codex | `AGENTS.md` in project root |
+
 ## Development
 
 ```bash
