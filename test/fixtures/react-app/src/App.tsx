@@ -1,4 +1,5 @@
 import { UserList, Button } from "./components";
+import { useAuth } from "./hooks/useAuth";
 import type { User } from "./types";
 
 const mockUsers: User[] = [
@@ -7,6 +8,9 @@ const mockUsers: User[] = [
 ];
 
 export function App(): JSX.Element {
+  const { user, loading } = useAuth();
+
+  if (loading) return <div>Loading...</div>;
   return (
     <div>
       <h2>My App</h2>

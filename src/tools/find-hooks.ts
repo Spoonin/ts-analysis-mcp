@@ -2,7 +2,7 @@ import { z } from "zod";
 import { Node, SyntaxKind } from "ts-morph";
 import type { HookCall } from "../types.js";
 import type { ToolContext } from "./tool.js";
-import { collectNamedDeclarations } from "../project/symbols.js";
+import { collectNamedDeclarations, type NamedDeclaration } from "../project/symbols.js";
 
 /**
  * find_hooks — find all React hook calls inside a component or custom hook.
@@ -10,6 +10,9 @@ import { collectNamedDeclarations } from "../project/symbols.js";
  * Scans the function body for call expressions matching the `use*` naming
  * convention. Works with any hook-based library (React, Redux, Zustand,
  * React Query, custom hooks) — no library-specific logic needed.
+ *
+ * With depth > 1, recursively resolves custom hooks that exist in the
+ * project to show their internal hook calls (hook chain).
  */
 export const findHooksSchema = {
   component: z
@@ -19,15 +22,23 @@ export const findHooksSchema = {
     .string()
     .optional()
     .describe("Disambiguate by file (path segment match)."),
+  depth: z
+    .number()
+    .int()
+    .positive()
+    .default(1)
+    .describe("Depth for hook chain resolution. 1 = direct hooks only, >1 = recurse into custom hooks."),
 };
 
 export function findHooks(
-  args: { component: string; file?: string },
+  args: { component: string; file?: string; depth: number },
   ctx: ToolContext,
 ): { component: string; file: string; hooks: HookCall[] } {
-  const declarations = collectNamedDeclarations(ctx.project, { file: args.file }).filter(
-    (d) => d.getName() === args.component,
-  );
+  const allDecls = collectNamedDeclarations(ctx.project);
+  const declarations = (args.file
+    ? collectNamedDeclarations(ctx.project, { file: args.file })
+    : allDecls
+  ).filter((d) => d.getName() === args.component);
 
   if (declarations.length === 0) {
     throw new Error(`Symbol not found: ${args.component}`);
@@ -44,7 +55,8 @@ export function findHooks(
     };
   }
 
-  const hooks = collectHookCalls(body);
+  const visiting = new Set<string>();
+  const hooks = collectHookCalls(body, allDecls, args.depth, visiting);
 
   return {
     component: args.component,
@@ -54,13 +66,16 @@ export function findHooks(
 }
 
 /**
- * Collect all `use*()` call expressions at the top level of the function body.
- *
- * React's Rules of Hooks dictate hooks are called at the top level of a component,
- * not inside loops/conditions/callbacks. We scan all call expressions in the body
- * but only match those whose callee starts with "use" (convention).
+ * Collect all `use*()` call expressions in the function body.
+ * When remainingDepth > 1, custom hooks found in the project are
+ * recursively resolved to show their internal hook calls.
  */
-function collectHookCalls(body: Node): HookCall[] {
+function collectHookCalls(
+  body: Node,
+  allDecls: NamedDeclaration[],
+  remainingDepth: number,
+  visiting: Set<string>,
+): HookCall[] {
   const calls = body.getDescendantsOfKind(SyntaxKind.CallExpression);
   const hooks: HookCall[] = [];
 
@@ -73,24 +88,54 @@ function collectHookCalls(body: Node): HookCall[] {
       .map((a) => a.getText())
       .join(", ");
 
-    hooks.push({
+    const hookCall: HookCall = {
       hook: hookName,
       args,
       line: call.getStartLineNumber(),
-    });
+    };
+
+    // Recurse into custom hooks that exist in the project.
+    if (remainingDepth > 1) {
+      const chain = resolveChain(hookName, allDecls, remainingDepth - 1, visiting);
+      if (chain && chain.length > 0) {
+        hookCall.chain = chain;
+      }
+    }
+
+    hooks.push(hookCall);
   }
 
   return hooks;
 }
 
 /**
+ * Try to resolve a custom hook's internal hook calls.
+ * Returns null if the hook is not found in the project (external/built-in).
+ */
+function resolveChain(
+  hookName: string,
+  allDecls: NamedDeclaration[],
+  remainingDepth: number,
+  visiting: Set<string>,
+): HookCall[] | null {
+  if (visiting.has(hookName)) return null; // cycle
+
+  const hookDecl = allDecls.find((d) => d.getName() === hookName);
+  if (!hookDecl) return null; // external hook, can't resolve
+
+  const hookBody = getBody(hookDecl);
+  if (!hookBody) return null;
+
+  visiting.add(hookName);
+  const chain = collectHookCalls(hookBody, allDecls, remainingDepth, visiting);
+  visiting.delete(hookName);
+
+  return chain;
+}
+
+/**
  * Extract hook name from a call expression. Returns the name if it matches
  * the `use*` convention, otherwise null.
- *
- * Handles:
- * - `useState(...)` → "useState"
- * - `React.useState(...)` → "useState"
- * - `useCustomHook(...)` → "useCustomHook"
  */
 function getHookName(call: Node): string | null {
   if (!Node.isCallExpression(call)) return null;
@@ -129,7 +174,6 @@ function getBody(decl: Node): Node | undefined {
     return undefined;
   }
   if (Node.isClassDeclaration(decl)) {
-    // Class components don't use hooks (usually), but check render()
     const render = decl.getMethod("render");
     return render?.getBody();
   }

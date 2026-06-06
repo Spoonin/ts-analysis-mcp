@@ -148,6 +148,8 @@ export interface HookCall {
   /** Raw argument text, e.g. "state => state.users.list" or "true". */
   args: string;
   line: number;
+  /** Recursive chain — internal hooks of a custom hook (present when depth > 1). */
+  chain?: HookCall[];
 }
 
 /** CONTEXT.md › Diagnostic. */
