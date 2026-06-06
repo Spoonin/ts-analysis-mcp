@@ -22,7 +22,7 @@ import { findHooks, findHooksSchema } from "./tools/find-hooks.js";
 export function createServer(project: AmbientProject): McpServer {
   const server = new McpServer({
     name: "ts-analysis-mcp",
-    version: "0.2.0",
+    version: "0.3.0",
   });
 
   const ctx: ToolContext = { project };

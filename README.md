@@ -21,7 +21,7 @@ This server fills that gap with ten tools powered by the TypeScript compiler's o
 | `find_jsx_usage` | Find all JSX render sites of a component, with props passed and parent component name. |
 | `get_exports` | List all exports of a module, resolving barrel re-exports to their original source file. |
 | `get_component_tree` | Build a component render tree from a root, recursively resolving JSX children (with depth limit and cycle detection). |
-| `find_hooks` | Find all React hook calls (`useState`, `useSelector`, `useEffect`, custom hooks, …) inside a component or hook, with raw argument text. |
+| `find_hooks` | Find all hook calls (`useState`, `useSelector`, `useEffect`, custom hooks, …) inside a component or hook. Supports recursive chain resolution (`depth`) to trace custom hooks to their primitives. |
 | `get_diagnostics` | List TypeScript compiler errors/warnings (fail-open — diagnostics never block other tools). |
 | `reload_project` | Re-read tsconfig and source files after external changes. |
 
@@ -112,7 +112,7 @@ navigation instead of grep or file reading:
 - find_jsx_usage — to find all JSX render sites of a component, with props and parent component
 - get_exports — to inspect what a module exports, resolving barrel re-exports to original sources
 - get_component_tree — to build a component render tree from a root (e.g. App → UserList → UserCard → Button)
-- find_hooks — to see which hooks a component calls (useState, useSelector, useEffect, custom hooks) with arguments
+- find_hooks — to see which hooks a component calls, with recursive chain resolution (e.g. useAuth → useState + useEffect)
 - get_diagnostics — to check for TypeScript compiler errors
 - reload_project — after making changes to source files
 
