@@ -32,6 +32,7 @@ function namedDeclarationsOf(sf: SourceFile): NamedDeclaration[] {
     ...sf.getEnums(),
     ...sf.getFunctions(),
     ...sf.getTypeAliases(),
+    ...sf.getVariableDeclarations(),
   ];
   return decls.filter((d) => d.getName() !== undefined) as NamedDeclaration[];
 }

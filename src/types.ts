@@ -112,6 +112,35 @@ export interface DecoratorMatch {
   argsText: string;
 }
 
+/** CONTEXT.md › JSX Usage — one JSX render site of a component. */
+export interface JsxUsage {
+  /** Component name as used in JSX (may be aliased import name). */
+  component: string;
+  file: string;
+  line: number;
+  column: number;
+  /** Enclosing function/class component name, or null if top-level. */
+  parentComponent: string | null;
+  /** Props as raw attribute text, e.g. ["label=\"View\"", "onClick={handleClick}"]. */
+  props: string[];
+  /** Whether <Foo /> (self-closing) vs <Foo>...</Foo>. */
+  selfClosing: boolean;
+}
+
+/** CONTEXT.md › Export Info — one exported symbol from a module. */
+export interface ExportInfo {
+  /** Exported name (what consumers import). */
+  name: string;
+  /** Declaration kind, e.g. "ClassDeclaration", "FunctionDeclaration". */
+  kind: string;
+  /** File where the symbol is actually declared. */
+  sourceFile: string;
+  /** Line in the source file. */
+  line: number;
+  /** True if this file re-exports from another file. */
+  isReExport: boolean;
+}
+
 /** CONTEXT.md › Diagnostic. */
 export interface DiagnosticInfo {
   file: string | null;

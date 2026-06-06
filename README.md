@@ -1,14 +1,14 @@
 # ts-analysis-mcp
 
-MCP server for structural navigation of TypeScript / NestJS codebases via [ts-morph](https://ts-morph.com).
+MCP server for structural navigation of TypeScript, React, and NestJS codebases via [ts-morph](https://ts-morph.com).
 
-Gives AI agents deep, decorator-aware understanding of your TypeScript project — beyond what a language server or plain file reading can provide.
+Gives AI agents deep, decorator-aware and JSX-aware understanding of your TypeScript project — beyond what a language server or plain file reading can provide.
 
 ## Why
 
-AI agents working with large NestJS codebases need to understand **structure**: who injects what, which controller handles which route, how modules are wired. Plain `grep` and file reading miss the semantic layer. Language servers give hover/go-to-definition but can't answer "find all classes decorated with `@Controller` and show me their route prefixes."
+AI agents working with large TypeScript codebases need to understand **structure**: component render trees in React, dependency injection wiring in NestJS, barrel re-exports, decorator metadata. Plain `grep` and file reading miss the semantic layer. Language servers give hover/go-to-definition but can't answer "find all classes decorated with `@Controller`" or "build me the component tree starting from `<App>`."
 
-This server fills that gap with six tools powered by the TypeScript compiler's own type checker.
+This server fills that gap with nine tools powered by the TypeScript compiler's own type checker.
 
 ## Tools
 
@@ -18,6 +18,9 @@ This server fills that gap with six tools powered by the TypeScript compiler's o
 | `get_symbol_info` | Full structural projection of a symbol: members, decorators, heritage, types. Accepts `Container#member` notation. |
 | `find_references` | Find all usages of a symbol, each classified by kind (`import`, `constructor-injection`, `decorator-metadata`, `heritage`, …) and position (`declaration`, `import-export`, `type`, `value`). |
 | `find_by_decorator` | Find all symbols decorated with a given decorator, with raw argument text (e.g. route prefix from `@Controller('users')`). |
+| `find_jsx_usage` | Find all JSX render sites of a component, with props passed and parent component name. |
+| `get_exports` | List all exports of a module, resolving barrel re-exports to their original source file. |
+| `get_component_tree` | Build a component render tree from a root, recursively resolving JSX children (with depth limit and cycle detection). |
 | `get_diagnostics` | List TypeScript compiler errors/warnings (fail-open — diagnostics never block other tools). |
 | `reload_project` | Re-read tsconfig and source files after external changes. |
 
@@ -101,12 +104,19 @@ Once the server is connected, tell your agent to prefer it over raw file reading
 When working in this TypeScript project, use the ts-analysis-mcp tools for structural
 navigation instead of grep or file reading:
 
-- find_symbol — to locate classes, interfaces, functions, enums, type aliases by name
+- find_symbol — to locate classes, interfaces, functions, enums, type aliases, variables by name
 - get_symbol_info — to inspect a symbol's full structure (members, decorators, heritage, types)
 - find_references — to find all usages of a symbol, classified by kind (import, injection, heritage, etc.)
 - find_by_decorator — to find all symbols with a given decorator (e.g. @Controller, @Injectable)
+- find_jsx_usage — to find all JSX render sites of a component, with props and parent component
+- get_exports — to inspect what a module exports, resolving barrel re-exports to original sources
+- get_component_tree — to build a component render tree from a root (e.g. App → UserList → UserCard → Button)
 - get_diagnostics — to check for TypeScript compiler errors
 - reload_project — after making changes to source files
+
+IMPORTANT: The server is stateful — it loads the TypeScript project into memory once at startup.
+After you edit, create, or delete source files, call reload_project before running any other
+tool, otherwise results will reflect the stale in-memory state.
 
 Prefer these tools over reading files manually when you need to understand project structure,
 dependency injection wiring, decorator metadata, type hierarchies, or symbol usage patterns.

@@ -1,4 +1,4 @@
-// Smoke #2 — drive all 6 tools over real stdio transport.
+// Smoke #4 — drive all 9 tools over real stdio transport.
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { fileURLToPath } from "node:url";
@@ -52,5 +52,35 @@ const r6 = await client.callTool({ name: "reload_project", arguments: {} });
 const p6 = JSON.parse(r6.content[0].text);
 console.log(`✅ reload_project: reloaded=${p6.reloaded}`);
 
+// --- Switch to react-app fixture for JSX/export tools ---
+// Reconnect with react-app fixture
 await client.close();
-console.log("\n🎉 ALL 6 TOOLS SMOKE OK");
+
+const reactFixtureDir = resolve(repoRoot, "test", "fixtures", "react-app");
+const transport2 = new StdioClientTransport({
+  command: process.execPath,
+  args: [serverEntry, "--project", reactFixtureDir],
+  cwd: repoRoot,
+});
+const client2 = new Client({ name: "smoke", version: "0.0.0" });
+await client2.connect(transport2);
+
+// 7. find_jsx_usage
+const r7 = await client2.callTool({ name: "find_jsx_usage", arguments: { component: "Button" } });
+const p7 = JSON.parse(r7.content[0].text);
+console.log(`✅ find_jsx_usage: ${p7.total} JSX usage(s) of Button, parent=${p7.items[0].parentComponent}`);
+
+// 8. get_exports
+const r8 = await client2.callTool({ name: "get_exports", arguments: { file: "components/index.ts" } });
+const p8 = JSON.parse(r8.content[0].text);
+const exportNames = p8.exports.map((e) => e.name).join(", ");
+console.log(`✅ get_exports: ${p8.exports.length} exports from barrel: ${exportNames}`);
+
+// 9. get_component_tree
+const r9 = await client2.callTool({ name: "get_component_tree", arguments: { component: "App" } });
+const p9 = JSON.parse(r9.content[0].text);
+const childNames = p9.tree.children.map((c) => c.name).join(", ");
+console.log(`✅ get_component_tree: root=${p9.tree.name}, children=[${childNames}]`);
+
+await client2.close();
+console.log("\n🎉 ALL 9 TOOLS SMOKE OK");
