@@ -59,20 +59,21 @@ export class AmbientProject {
    * must never break a query.
    */
   ensureFresh(): void {
-    // Modified / deleted sweep over already-loaded in-scope files.
-    for (const sf of this.project.getSourceFiles()) {
-      const path = sf.getFilePath();
-      if (!isInScope(path)) continue;
+    // Modified / deleted sweep. Iterate the mtimes keys (already the in-scope
+    // set) rather than every source file: this keeps node_modules dependency
+    // files and a per-file realpathSync out of the hot path. Snapshot the keys
+    // because the deleted branch mutates the map.
+    for (const path of [...this.mtimes.keys()]) {
       try {
         const mtime = statSync(path).mtimeMs;
         if (mtime !== this.mtimes.get(path)) {
-          sf.refreshFromFileSystemSync();
+          this.project.getSourceFile(path)?.refreshFromFileSystemSync();
           this.mtimes.set(path, mtime);
         }
       } catch {
         // Gone from disk (ENOENT) or unreadable: drop it from the project.
         try {
-          sf.refreshFromFileSystemSync();
+          this.project.getSourceFile(path)?.refreshFromFileSystemSync();
         } catch {
           // ignore — the file may already be detached
         }
