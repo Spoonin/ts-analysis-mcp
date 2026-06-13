@@ -51,7 +51,7 @@ The set of source files a search tool considers. A file is in scope if its **rea
 The directory that serves as the root of the analysed TypeScript project. Determined at server startup: the value of `--project` flag if supplied, otherwise the nearest ancestor directory of `process.cwd()` that contains a `tsconfig.json`. The server refuses to start if no `tsconfig.json` is found.
 
 ## Ambient Project
-The single `ts-morph Project` instance that is initialized once at server startup and lives for the entire server session. All tools operate against this shared instance. Contrast with Transient Project.
+The single `ts-morph Project` instance that is initialized once at server startup and lives for the entire server session. All tools operate against this shared instance. Contrast with Transient Project. The project auto-invalidates: before each query, `ensureFresh()` (ADR 0006) stats in-scope source files and refreshes only those whose mtime changed, drops deleted files, and picks up newly added ones — so edits are reflected without a manual `reload_project`, which remains only as a full-rebuild escape hatch.
 
 ## Transient Project
 (Rejected alternative.) A `ts-morph Project` created or retrieved from a cache on each tool call, keyed by a caller-supplied `projectRoot` path. Rejected in favour of Ambient Project.

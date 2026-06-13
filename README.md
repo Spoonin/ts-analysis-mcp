@@ -23,7 +23,7 @@ This server fills that gap with ten tools powered by the TypeScript compiler's o
 | `get_component_tree` | Build a component render tree from a root, recursively resolving JSX children (with depth limit and cycle detection). |
 | `find_hooks` | Find all hook calls (`useState`, `useSelector`, `useEffect`, custom hooks, …) inside a component or hook. Supports recursive chain resolution (`depth`) to trace custom hooks to their primitives. |
 | `get_diagnostics` | List TypeScript compiler errors/warnings (fail-open — diagnostics never block other tools). |
-| `reload_project` | Re-read tsconfig and source files after external changes. |
+| `reload_project` | Force a full rebuild (rarely needed; edits/adds/deletes are picked up automatically). |
 
 ## Quick start
 
@@ -114,11 +114,12 @@ navigation instead of grep or file reading:
 - get_component_tree — to build a component render tree from a root (e.g. App → UserList → UserCard → Button)
 - find_hooks — to see which hooks a component calls, with recursive chain resolution (e.g. useAuth → useState + useEffect)
 - get_diagnostics — to check for TypeScript compiler errors
-- reload_project — after making changes to source files
+- reload_project — full rebuild; rarely needed (see below)
 
-IMPORTANT: The server is stateful — it loads the TypeScript project into memory once at startup.
-After you edit, create, or delete source files, call reload_project before running any other
-tool, otherwise results will reflect the stale in-memory state.
+The server loads the TypeScript project into memory once at startup, then auto-invalidates:
+before each query it refreshes only the files whose mtime changed and picks up added/deleted
+files, so your edits are reflected automatically. Call reload_project only to force a full
+rebuild after structural changes the incremental sweep can't see, e.g. editing tsconfig.
 
 Prefer these tools over reading files manually when you need to understand project structure,
 dependency injection wiring, decorator metadata, type hierarchies, or symbol usage patterns.
