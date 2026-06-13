@@ -22,10 +22,19 @@ import { findHooks, findHooksSchema } from "./tools/find-hooks.js";
 export function createServer(project: AmbientProject): McpServer {
   const server = new McpServer({
     name: "ts-analysis-mcp",
-    version: "0.3.0",
+    version: "0.4.0",
   });
 
   const ctx: ToolContext = { project };
+
+  // Freshness chokepoint: every query tool refreshes changed files first, so
+  // edits/adds/deletes are reflected without a manual reload_project (ADR 0006).
+  const fresh =
+    <A>(fn: (a: A, c: ToolContext) => unknown) =>
+    (a: A) => {
+      project.ensureFresh();
+      return jsonResult(fn(a, ctx));
+    };
 
   server.registerTool(
     "find_symbol",
@@ -33,7 +42,7 @@ export function createServer(project: AmbientProject): McpServer {
       description: "Locate symbols by name (exact/contains/regex). Returns all matches.",
       inputSchema: findSymbolSchema,
     },
-    (args) => jsonResult(findSymbol(args, ctx)),
+    fresh(findSymbol),
   );
 
   server.registerTool(
@@ -42,7 +51,7 @@ export function createServer(project: AmbientProject): McpServer {
       description: "Full structural projection of a symbol. Accepts Name or Container#member.",
       inputSchema: getSymbolInfoSchema,
     },
-    (args) => jsonResult(getSymbolInfo(args, ctx)),
+    fresh(getSymbolInfo),
   );
 
   server.registerTool(
@@ -51,7 +60,7 @@ export function createServer(project: AmbientProject): McpServer {
       description: "Find all in-scope usages of a symbol, each classified by refKind/position.",
       inputSchema: findReferencesSchema,
     },
-    (args) => jsonResult(findReferences(args, ctx)),
+    fresh(findReferences),
   );
 
   server.registerTool(
@@ -60,7 +69,7 @@ export function createServer(project: AmbientProject): McpServer {
       description: "Find symbols decorated with a given decorator, with raw argument text.",
       inputSchema: findByDecoratorSchema,
     },
-    (args) => jsonResult(findByDecorator(args, ctx)),
+    fresh(findByDecorator),
   );
 
   server.registerTool(
@@ -69,13 +78,14 @@ export function createServer(project: AmbientProject): McpServer {
       description: "List TypeScript compiler errors/warnings in the project (fail-open).",
       inputSchema: getDiagnosticsSchema,
     },
-    (args) => jsonResult(getDiagnostics(args, ctx)),
+    fresh(getDiagnostics),
   );
 
   server.registerTool(
     "reload_project",
     {
-      description: "Re-read tsconfig and source files, replacing the in-memory project.",
+      description:
+        "Force a full rebuild of the in-memory project (rarely needed: edits, adds, and deletes are picked up automatically; use this only to recover from drift).",
       inputSchema: reloadProjectSchema,
     },
     (args) => jsonResult(reloadProject(args, ctx)),
@@ -87,7 +97,7 @@ export function createServer(project: AmbientProject): McpServer {
       description: "Find all JSX render sites of a component, with props and parent component.",
       inputSchema: findJsxUsageSchema,
     },
-    (args) => jsonResult(findJsxUsage(args, ctx)),
+    fresh(findJsxUsage),
   );
 
   server.registerTool(
@@ -96,7 +106,7 @@ export function createServer(project: AmbientProject): McpServer {
       description: "List all exports of a module, resolving re-exports to their original source.",
       inputSchema: getExportsSchema,
     },
-    (args) => jsonResult(getExports(args, ctx)),
+    fresh(getExports),
   );
 
   server.registerTool(
@@ -106,7 +116,7 @@ export function createServer(project: AmbientProject): McpServer {
         "Build a component render tree from a root component, recursively resolving JSX children.",
       inputSchema: getComponentTreeSchema,
     },
-    (args) => jsonResult(getComponentTree(args, ctx)),
+    fresh(getComponentTree),
   );
 
   server.registerTool(
@@ -116,7 +126,7 @@ export function createServer(project: AmbientProject): McpServer {
         "Find all React hook calls (useState, useSelector, useEffect, custom hooks, …) inside a component or hook.",
       inputSchema: findHooksSchema,
     },
-    (args) => jsonResult(findHooks(args, ctx)),
+    fresh(findHooks),
   );
 
   return server;
